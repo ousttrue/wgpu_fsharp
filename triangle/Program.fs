@@ -64,19 +64,31 @@ let rec Loop
         Loop app window renderer pipeline
 
 
-let GetNativeValue (nativeWindow: GlfwNativeWindow) : WgpuUtil.NativeWindowValue =
+let GetNativeValue (nativeWindow: GlfwNativeWindow) : Option<WgpuUtil.NativeWindowValue> =
     if System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) then
         let hwnd, _hdc, hinstance = nativeWindow.Win32.Value.ToTuple()
-        WgpuUtil.Win32(hinstance, hwnd)
+        printfn "[Win32]"
+        Some(WgpuUtil.Win32(hinstance, hwnd))
 
     else if
         System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux)
     then
-        let d, w = nativeWindow.X11.Value.ToTuple()
-        WgpuUtil.X11(d, w)
-    else
+        if System.String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("WAYLAND_DISPLAY")) then
+            let d, w = nativeWindow.X11.Value.ToTuple()
+            printfn "[X11]"
+            Some(WgpuUtil.X11(d, w))
+        else
+            let d, s = nativeWindow.Wayland.Value.ToTuple()
+            printfn "[Wayland]"
+            Some(WgpuUtil.Wayland(d, s))
+    else if
+        System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX)
+    then
         let nw = nativeWindow.Cocoa.Value
-        WgpuUtil.Cocoa(nw)
+        printfn "[OSX]"
+        Some(WgpuUtil.Cocoa(nw))
+    else
+        None
 
 
 [<EntryPoint>]
@@ -88,7 +100,7 @@ let main (argv: string []) : int =
         use window = window
 
         match (GetNativeValue(window.GetNativeWindow())) with
-        | WgpuUtil.Win32 (_, _) as native ->
+        | Some (native) ->
             let (width, height) = window.GetSize()
 
             match (WgpuUtil.CreateDevice native width height) with
@@ -100,6 +112,5 @@ let main (argv: string []) : int =
                     0
                 | None -> 5
             | None -> 4
-        | WgpuUtil.X11 (_, _) -> 2
-        | WgpuUtil.Cocoa (_) -> 3
+        | None -> 2
     | None -> 1

@@ -30,6 +30,7 @@ type NativeWindowValue =
     | Win32 of hinstance: nativeint * hwnd: nativeint
     | X11 of display: nativeint * window: unativeint
     | Cocoa of layer: nativeint
+    | Wayland of display: nativeint * surface: nativeint
 
 
 let CreateSurface (instance: WGPU.Native.Instance) (native: NativeWindowValue) : Option<WGPU.Native.Surface> =
@@ -42,6 +43,21 @@ let CreateSurface (instance: WGPU.Native.Instance) (native: NativeWindowValue) :
                 WGPU.Native.ChainedStruct(sType = WGPU.Native.SType.SurfaceDescriptorFromWindowsHWND),
                 hinstance,
                 hwnd
+            )
+
+        let mutable surfaceDescriptor =
+            WGPU.Native.SurfaceDescriptor(NativePtr.toNativeInt &&info, "SurfaceDescriptor")
+
+        let surface = instance.CreateSurface &surfaceDescriptor
+        Some(surface)
+    | Wayland (display, surface) ->
+        printfn "[WGPU] [Wayland] surface"
+
+        let mutable info =
+            WGPU.Native.SurfaceDescriptorFromWaylandSurface(
+                WGPU.Native.ChainedStruct(sType = WGPU.Native.SType.SurfaceDescriptorFromWaylandSurface),
+                display,
+                surface
             )
 
         let mutable surfaceDescriptor =
