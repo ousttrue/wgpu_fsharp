@@ -169,11 +169,12 @@ let CreateDevice (native: NativeWindowValue) (width: uint) (height: uint) : Opti
         let mutable device = WGPU.Native.Device()
         let deviceCallback _status _device _message _userdata = device <- _device
         printfn "[WGPU] Creating device"
+        adapter.RequestDevice(&deviceDescriptor, WGPU.Native.RequestDeviceCallback deviceCallback, IntPtr.Zero)
 
         let swapchainFormat = surface.GetPreferredFormat(adapter)
 
         let recreateSwapchain width height =
-            printfn "[WGPU] Creating swapchain"
+            printfn "[WGPU] Creating swapchain %d x %d" width height
 
             let mutable swapchainDescriptor =
                 WGPU.Native.SwapChainDescriptor(
@@ -185,8 +186,6 @@ let CreateDevice (native: NativeWindowValue) (width: uint) (height: uint) : Opti
                 )
 
             device.CreateSwapChain(surface, &swapchainDescriptor)
-
-        adapter.RequestDevice(&deviceDescriptor, WGPU.Native.RequestDeviceCallback deviceCallback, IntPtr.Zero)
 
         let swapchain = recreateSwapchain width height
 
