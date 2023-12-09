@@ -65,29 +65,25 @@ let rec Loop
 
 
 let GetNativeValue (nativeWindow: GlfwNativeWindow) : Option<WgpuUtil.NativeWindowValue> =
-    if System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) then
+    if nativeWindow.Win32.HasValue then
         let hwnd, _hdc, hinstance = nativeWindow.Win32.Value.ToTuple()
         printfn "[Win32]"
         Some(WgpuUtil.Win32(hinstance, hwnd))
-
-    else if
-        System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux)
-    then
-        if System.String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("WAYLAND_DISPLAY")) then
-            let d, w = nativeWindow.X11.Value.ToTuple()
-            printfn "[X11]"
-            Some(WgpuUtil.X11(d, w))
-        else
-            let d, s = nativeWindow.Wayland.Value.ToTuple()
-            printfn "[Wayland]"
-            Some(WgpuUtil.Wayland(d, s))
-    else if
-        System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX)
-    then
+    else if nativeWindow.Cocoa.HasValue then
         let nw = nativeWindow.Cocoa.Value
         printfn "[OSX]"
         Some(WgpuUtil.Cocoa(nw))
+    else if nativeWindow.Wayland.HasValue then
+        // require: sudo apt install libglfw3-wayland
+        let d, s = nativeWindow.Wayland.Value.ToTuple()
+        printfn "[Wayland]"
+        Some(WgpuUtil.Wayland(d, s))
+    else if nativeWindow.X11.HasValue then
+        let d, w = nativeWindow.X11.Value.ToTuple()
+        printfn "[X11]"
+        Some(WgpuUtil.X11(d, w))
     else
+        printfn "[nothing] GetNativeValue"
         None
 
 
