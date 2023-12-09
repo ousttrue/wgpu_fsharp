@@ -75,6 +75,8 @@ let GetNativeValue (nativeWindow: GlfwNativeWindow) : Option<WgpuUtil.NativeWind
         Some(WgpuUtil.Cocoa(nw))
     else if nativeWindow.Wayland.HasValue then
         // require: sudo apt install libglfw3-wayland
+        // if not <| Glfw.VulkanSupported() then
+        //     printfn ("GLFW: Vulkan not supported\n")
         let d, s = nativeWindow.Wayland.Value.ToTuple()
         printfn "[Wayland]"
         Some(WgpuUtil.Wayland(d, s))

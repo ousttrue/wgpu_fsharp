@@ -174,7 +174,7 @@ let CreateDevice (native: NativeWindowValue) (width: uint) (height: uint) : Opti
         let swapchainFormat = surface.GetPreferredFormat(adapter)
 
         let recreateSwapchain width height =
-            printfn "[WGPU] Creating swapchain %d x %d" width height
+            printfn "[WGPU] Creating swapchain %d x %d (%s)" width height (swapchainFormat.ToString())
 
             let mutable swapchainDescriptor =
                 WGPU.Native.SwapChainDescriptor(
